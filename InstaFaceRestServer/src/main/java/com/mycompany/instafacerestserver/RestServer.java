@@ -6,12 +6,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response; 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -31,7 +27,7 @@ public class RestServer
         {
             Connect();
             JSONObject json = new JSONObject(jsonString);
-            User user = new User(json.getString("Name"), json.getString("Surname"), json.getString("Username"), json.getString("Password"), json.getString("Genre"), json.getString("Country"), json.getString("Town"));
+            User user = new User(json.getString("Name"), json.getString("Surname"), json.getString("Username"), json.getString("Password"), json.getInt("Genre"), json.getString("Country"), json.getString("Town"));
             
             ResultSet users = Connection.createStatement().executeQuery("SELECT Username FROM Users");
             while(users.next())
@@ -46,7 +42,7 @@ public class RestServer
             prep.setString(2, user.getSurname());
             prep.setString(3, user.getUsername());
             prep.setString(4, user.getPassword());
-            prep.setString(5, user.getGenre());
+            prep.setInt(5, user.getGenre());
             prep.setString(6, user.getCountry());
             prep.setString(7, user.getTown());
             prep.addBatch();
@@ -143,22 +139,28 @@ public class RestServer
     
     @Path("/showfriends")
     @POST
-    public Response Friends(String username)
+    public Response ShowFriends(String username)
     {
         try
         {
             Connect();
             String friends = "";
             ResultSet friendships = Connection.createStatement().executeQuery("SELECT User1, User2 FROM Friendships");
-            ResultSet users = Connection.createStatement().executeQuery("SELECT Username, Name, Surname, Email FROM Users");
+            ResultSet users = Connection.createStatement().executeQuery("SELECT Name, Surname, Username, Genre, Country, Town FROM Users");
 
+            String genre;
+            int counter = 0;
             while(friendships.next())
                 if(friendships.getString(1).equals(username))
                 {
                     while(users.next())
                         if(users.getString(1).equals(friendships.getString(2)))
                         {
-                            friends += users.getString(1) + " mpla1 " + users.getString(2) + " mpla1 " + users.getString(3) + " mpla1 " + users.getString(4) + "m2\n";
+                            if(users.getInt(4) == 1)
+                                genre = "Male";
+                            else
+                                genre = "Female";
+                            friends += ++counter + ") " +  users.getString(1) + " " + users.getString(2) + " " + users.getString(3) + " " + genre + " " +  users.getString(5) + " " + users.getString(6) + "\n";
                             break;
                         }
                 }   
@@ -167,7 +169,11 @@ public class RestServer
                     while(users.next())
                         if(users.getString(1).equals(friendships.getString(1)))
                         {
-                            friends += users.getString(1) + " mpla1 " + users.getString(2) + " mpla1 " + users.getString(3) + " mpla1 " + users.getString(4) + " m2\n";
+                            if(users.getInt(4) == 1)
+                                genre = "Male";
+                            else
+                                genre = "Female";
+                            friends += ++counter + ") " + users.getString(1) + " " + users.getString(2) + " " + users.getString(3) + " " + genre + " " +  users.getString(5) + " " + users.getString(6) + "\n";
                             break;
                         }
                 }
@@ -181,6 +187,53 @@ public class RestServer
         }
         
         return Response.status(201).entity("").build();
+    }
+    
+    @Path("/deletefriend")
+    @POST
+    public Response DeleteFriend(String jsonString)
+    {
+        try
+        {
+            Connect();
+            JSONObject json = new JSONObject(jsonString);
+            Friendship friendship = new Friendship(json.getString("User1"), json.getString("User2"));
+            
+            boolean exists = false;
+            ResultSet users = Connection.createStatement().executeQuery("SELECT Username FROM Users");
+            while(users.next())
+                if(users.getString(1).equals(friendship.getUser2()))
+                {
+                    exists = true;
+                    break;
+                }
+            
+            if(!exists)
+            {
+                Disconnect();
+                return Response.status(202).entity("").build();
+            }
+            
+            ResultSet friendships = Connection.createStatement().executeQuery("SELECT * FROM Friendships");
+            while(friendships.next())
+                if((friendships.getString(2).equals(friendship.getUser1()) && friendships.getString(3).equals(friendship.getUser2()))
+                   || (friendships.getString(2).equals(friendship.getUser2()) && friendships.getString(3).equals(friendship.getUser1())))
+                {
+                    Connection.createStatement().execute("DELETE FROM Friendships WHERE Id=" + friendships.getInt(1) + ";");
+                    System.out.println("OK");
+                    Disconnect();
+                    return Response.status(200).entity("").build();
+                }
+            
+            Disconnect();
+            return Response.status(201).entity("").build();
+        }
+        catch (SQLException | JSONException ex)
+        {
+            System.err.println("Something went wrong (DeleteFriend)!");
+        }
+        
+        return Response.status(203).entity("").build();
     }
     
     public void Connect()

@@ -20,25 +20,16 @@ public class InstaFace extends JFrame
     User User;
     String Target = "http://localhost:8080/InstaFaceRestServer/api/restserver/";
     Client Client = ClientBuilder.newClient();
-
+    
+    JLabel UsernameLabel = new JLabel("", SwingConstants.CENTER);
     JLabel Username = new JLabel("Username", SwingConstants.CENTER);
     JLabel Password = new JLabel("Password", SwingConstants.CENTER);
-    JLabel UsernameLabel = new JLabel("", SwingConstants.CENTER);
     JLabel PasswordLabel = new JLabel("Password");
     JLabel NameLabel = new JLabel("Name");
     JLabel SurnameLabel = new JLabel("Surname");
-    JLabel FriendsLabel = new JLabel();
-
+    
     JPanel LogPanel = new JPanel();
     JPanel MainPanel = new JPanel();
-    JPanel SettingsPanel = new JPanel();
-    
-    JButton SettingsButton = new JButton("Settings");
-    JButton SignOutButton = new JButton("Sign Out");
-    JButton AddFriendButton = new JButton("Add Friend");
-    JButton ShowFriendsButton = new JButton("Friends");
-
-    JTextField AddFriendTextField = new JTextField();
 
     public InstaFace()
     {
@@ -48,68 +39,8 @@ public class InstaFace extends JFrame
     
     public void InitializeFrame()
     {
-        
         CreateLogPanel();
-        //CreateMainPanel();
-        
-        SettingsButton.setFocusable(false);
-        SettingsButton.addMouseListener(new java.awt.event.MouseAdapter()
-        {
-            public void mouseClicked(java.awt.event.MouseEvent evt)
-            {
-                Settings();
-            }
-        });
-        /*
-        SettingsPanel.setLayout(new GridLayout(0, 2));
-        SettingsPanel.add(PasswordLabel);
-        SettingsPanel.add(PasswordField);
-        SettingsPanel.add(NameLabel);
-        SettingsPanel.add(NameTextField);
-        SettingsPanel.add(SurnameLabel);
-        SettingsPanel.add(SurnameTextField);
-        SettingsPanel.add(EmailLabel);
-        SettingsPanel.add(EmailTextField);*/
-        
-        SignOutButton.setFocusable(false);
-        SignOutButton.addMouseListener(new java.awt.event.MouseAdapter()
-        {
-            public void mouseClicked(java.awt.event.MouseEvent evt)
-            {
-                setSize(400, 100);
-                remove(MainPanel);
-                UsernameLabel.setText("");
-
-                User = null;
-                add(LogPanel);
-            }
-        });
-        
-        AddFriendButton.setFocusable(false);
-        AddFriendButton.addMouseListener(new java.awt.event.MouseAdapter()
-        {
-            public void mouseClicked(java.awt.event.MouseEvent evt)
-            {
-                AddFriend();
-            }
-        });
-        
-        ShowFriendsButton.setFocusable(false);
-        ShowFriendsButton.addMouseListener(new java.awt.event.MouseAdapter()
-        {
-            public void mouseClicked(java.awt.event.MouseEvent evt)
-            {
-                ShowFriends();
-            }
-        });
-        
-        MainPanel.setLayout(new GridLayout(0, 3));
-        MainPanel.add(UsernameLabel);
-        MainPanel.add(SettingsButton);
-        MainPanel.add(SignOutButton);
-        MainPanel.add(AddFriendTextField);
-        MainPanel.add(AddFriendButton);
-        MainPanel.add(ShowFriendsButton);
+        CreateMainPanel();
         
         setSize(400, 100);
         setBackground(Color.GRAY);
@@ -175,26 +106,26 @@ public class InstaFace extends JFrame
                 SignUpPanel.add(new JLabel("Town"));
                 SignUpPanel.add(TownTextField);
                 
+                NameTextField.setText("");
+                SurnameTextField.setText("");
+                UsernameTextField.setText("");
+                PasswordField.setText("");
+                MaleRadioButton.setSelected(false);
+                FemaleRadioButton.setSelected(false);
+                CountryTextField.setText("");
+                TownTextField.setText("");
+                    
                 String name;
                 String surname;
                 String username;
                 String password;
-                String genre;
+                int genre;
                 String country;
                 String town;
                 
                 boolean valid;
                 do
                 {
-                    NameTextField.setText("");
-                    SurnameTextField.setText("");
-                    UsernameTextField.setText("");
-                    PasswordField.setText("");
-                    MaleRadioButton.setSelected(false);
-                    FemaleRadioButton.setSelected(false);
-                    CountryTextField.setText("");
-                    TownTextField.setText("");
-                    
                     Object []options= {"Sign Up", "Cancel"};
                     int option = JOptionPane.showOptionDialog(null, SignUpPanel, "Sign Up", JOptionPane.DEFAULT_OPTION, JOptionPane.DEFAULT_OPTION, null, options, null);
                     if(option == 0)
@@ -226,9 +157,9 @@ public class InstaFace extends JFrame
                 } while(!valid);
                 
                 if(MaleRadioButton.isSelected())
-                    genre = "Male";
+                    genre = 1;
                 else
-                    genre = "Female";
+                    genre = 2;
                 
                 WebTarget target = Client.target(Target + "signup");
                 Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(new User(name, surname, username, password, genre, country, town).ToJSON()));
@@ -289,6 +220,148 @@ public class InstaFace extends JFrame
         LogPanel.add(SignInButton);
     }
     
+    public void CreateMainPanel()
+    {
+        JButton SettingsButton = new JButton("Settings");
+//        JPanel SettingsPanel = new JPanel();
+        JButton SignOutButton = new JButton("Sign Out");
+        JTextField AddFriendTextField = new JTextField();
+        JButton AddFriendButton = new JButton("Add Friend");
+        JButton ShowFriendsButton = new JButton("Friends");
+        JTextField DeleteFriendTextField = new JTextField();
+        JButton DeleteFriendButton = new JButton("Delete Friend");
+
+        SettingsButton.setFocusable(false);
+        SettingsButton.addMouseListener(new java.awt.event.MouseAdapter()
+        {
+            public void mouseClicked(java.awt.event.MouseEvent evt)
+            {
+                //Settings();
+            }
+        });
+        /*
+        SettingsPanel.setLayout(new GridLayout(0, 2));
+        SettingsPanel.add(PasswordLabel);
+        SettingsPanel.add(PasswordField);
+        SettingsPanel.add(NameLabel);
+        SettingsPanel.add(NameTextField);
+        SettingsPanel.add(SurnameLabel);
+        SettingsPanel.add(SurnameTextField);
+        SettingsPanel.add(EmailLabel);
+        SettingsPanel.add(EmailTextField);*/
+        
+        SignOutButton.setFocusable(false);
+        SignOutButton.addMouseListener(new java.awt.event.MouseAdapter()
+        {
+            public void mouseClicked(java.awt.event.MouseEvent evt)
+            {
+                setSize(400, 100);
+                remove(MainPanel);
+                User = null;
+                add(LogPanel);
+            }
+        });
+        
+        AddFriendButton.setFocusable(false);
+        AddFriendButton.addMouseListener(new java.awt.event.MouseAdapter()
+        {
+            public void mouseClicked(java.awt.event.MouseEvent evt)
+            {
+                String friend = AddFriendTextField.getText();
+        
+                if(friend.length() == 0)
+                {
+                    JOptionPane.showMessageDialog(null, "Field is empty!");
+                    return;
+                }
+
+                if(friend.equals(User.getUsername()))
+                {
+                    JOptionPane.showMessageDialog(null, "Wrong input!");
+                    return;
+                }
+
+                WebTarget target = Client.target(Target + "addfriend");
+                Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(new Friendship(User.getUsername(), friend).ToJSON()));
+
+                if (response.getStatus() == 200)
+                    JOptionPane.showMessageDialog(null, "Friend added successfully!");
+                else if (response.getStatus() == 201)
+                    JOptionPane.showMessageDialog(null, "Already friends with user " + friend + "!");
+                else if (response.getStatus() == 202)
+                    JOptionPane.showMessageDialog(null, "User " + friend + " does not exist!");
+                else
+                    JOptionPane.showMessageDialog(null, "Something went wrong!");
+
+                AddFriendTextField.setText("");
+            }
+        });
+        
+        ShowFriendsButton.setFocusable(false);
+        ShowFriendsButton.addMouseListener(new java.awt.event.MouseAdapter()
+        {
+            public void mouseClicked(java.awt.event.MouseEvent evt)
+            {
+                WebTarget target = Client.target(Target + "showfriends");
+                Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(User.getUsername()));
+
+                if (response.getStatus() == 200)
+                {
+                    JTextArea FriendsTextArea = new JTextArea(response.readEntity(String.class));
+                    FriendsTextArea.setFocusable(false);
+                    JOptionPane.showConfirmDialog(null, FriendsTextArea, "Friends", JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE);
+                }
+                else
+                    JOptionPane.showMessageDialog(null, "Something went wrong!");
+            }
+        });
+        
+        DeleteFriendButton.setFocusable(false);
+        DeleteFriendButton.addMouseListener(new java.awt.event.MouseAdapter()
+        {
+            public void mouseClicked(java.awt.event.MouseEvent evt)
+            {
+                String friend = DeleteFriendTextField.getText();
+        
+                if(friend.length() == 0)
+                {
+                    JOptionPane.showMessageDialog(null, "Field is empty!");
+                    return;
+                }
+
+                if(friend.equals(User.getUsername()))
+                {
+                    JOptionPane.showMessageDialog(null, "Wrong input!");
+                    return;
+                }
+
+                WebTarget target = Client.target(Target + "deletefriend");
+                Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(new Friendship(User.getUsername(), friend).ToJSON()));
+
+                if (response.getStatus() == 200)
+                    JOptionPane.showMessageDialog(null, "Friend deleted successfully!");
+                else if (response.getStatus() == 201)
+                    JOptionPane.showMessageDialog(null, "Not friends with user " + friend + "!");
+                else if (response.getStatus() == 202)
+                    JOptionPane.showMessageDialog(null, "User " + friend + " does not exist!");
+                else
+                    JOptionPane.showMessageDialog(null, "Something went wrong!");
+
+                DeleteFriendTextField.setText("");
+            }
+        });
+        
+        MainPanel.setLayout(new GridLayout(0, 3));
+        MainPanel.add(UsernameLabel);
+        MainPanel.add(SettingsButton);
+        MainPanel.add(SignOutButton);
+        MainPanel.add(AddFriendTextField);
+        MainPanel.add(AddFriendButton);
+        MainPanel.add(ShowFriendsButton);
+        MainPanel.add(DeleteFriendTextField);
+        MainPanel.add(DeleteFriendButton);
+    }
+    /*
     public void Settings()
     {
         Object []options= {"Save", "Cancel"};
@@ -314,53 +387,5 @@ public class InstaFace extends JFrame
 //        {
 //            
 //        }
-    }
-    
-    public void AddFriend()
-    {
-        String user2 = AddFriendTextField.getText();
-        
-        if(user2.length() == 0)
-        {
-            JOptionPane.showMessageDialog(null, "Field is empty!");
-            return;
-        }
-        
-        if(user2.equals(User.getUsername()))
-        {
-            JOptionPane.showMessageDialog(null, "Wrong input!");
-            return;
-        }
-        
-        WebTarget target = Client.target(Target + "addfriend");
-        Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(new Friendship(User.getUsername(), user2).ToJSON()));
-        
-        if (response.getStatus() == 200)
-        {
-            JOptionPane.showMessageDialog(null, "Friend added successfully!");
-            AddFriendTextField.setText("");
-        }
-        else if (response.getStatus() == 201)
-            JOptionPane.showMessageDialog(null, "Already friends with user " + user2 + "!");
-        else if (response.getStatus() == 202)
-            JOptionPane.showMessageDialog(null, "User " + user2 + " does not exist!");
-        else
-            JOptionPane.showMessageDialog(null, "Something went wrong!");
-    }
-    
-    public void ShowFriends()
-    {
-        WebTarget target = Client.target(Target + "showfriends");
-        Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(User.getUsername()));
-        
-        if (response.getStatus() == 200)
-        {
-            FriendsLabel.setText(response.readEntity(String.class));
-            JOptionPane.showConfirmDialog(null, FriendsLabel, "Show Friends", JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE);
-        }
-        else
-            JOptionPane.showMessageDialog(null, "Something went wrong!");
-    }
-    
-    
+    }*/
 }

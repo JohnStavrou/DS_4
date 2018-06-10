@@ -8,11 +8,11 @@ public class User
     private String Surname;
     private String Username;
     private String Password;
-    private String Genre;
+    private int Genre;
     private String Country;
     private String Town;
 
-    public User(String Name, String Surname, String Username, String Password, String Genre, String Country, String Town)
+    public User(String Name, String Surname, String Username, String Password, int Genre, String Country, String Town)
     {
         this.Name = Name;
         this.Surname = Surname;
@@ -29,7 +29,7 @@ public class User
         this.Surname = "";
         this.Username = Username;
         this.Password = Password;
-        this.Genre = "";
+        this.Genre = 0;
         this.Country = "";
         this.Town = "";
     }
@@ -38,7 +38,7 @@ public class User
     public String getSurname() { return Surname; }
     public String getUsername() { return Username; }
     public String getPassword() { return Password; }
-    public String getGenre() { return Genre; }
+    public int getGenre() { return Genre; }
     public String getCountry() { return Country; }
     public String getTown() { return Town; }
     
