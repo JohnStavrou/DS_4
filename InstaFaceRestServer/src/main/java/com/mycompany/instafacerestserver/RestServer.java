@@ -31,7 +31,7 @@ public class RestServer
         {
             Connect();
             JSONObject json = new JSONObject(jsonString);
-            User user = new User(json.getString("Username"), json.getString("Password"));
+            User user = new User(json.getString("Name"), json.getString("Surname"), json.getString("Username"), json.getString("Password"), json.getString("Genre"), json.getString("Country"), json.getString("Town"));
             
             ResultSet users = Connection.createStatement().executeQuery("SELECT Username FROM Users");
             while(users.next())
@@ -41,9 +41,14 @@ public class RestServer
                     return Response.status(201).entity("").build();
                 }
 
-            PreparedStatement prep = Connection.prepareStatement("INSERT INTO Users (Username, Password) VALUES (?, ?);");
-            prep.setString(1, user.getUsername());
-            prep.setString(2, user.getPassword());
+            PreparedStatement prep = Connection.prepareStatement("INSERT INTO Users (Name, Surname, Username, Password, Genre, Country, Town) VALUES (?, ?, ?, ?, ?, ?, ?);");
+            prep.setString(1, user.getName());
+            prep.setString(2, user.getSurname());
+            prep.setString(3, user.getUsername());
+            prep.setString(4, user.getPassword());
+            prep.setString(5, user.getGenre());
+            prep.setString(6, user.getCountry());
+            prep.setString(7, user.getTown());
             prep.addBatch();
             prep.executeBatch();
             Disconnect();
@@ -136,7 +141,7 @@ public class RestServer
         return Response.status(203).entity("").build();
     }
     
-    @Path("/friends")
+    @Path("/showfriends")
     @POST
     public Response Friends(String username)
     {
@@ -153,16 +158,16 @@ public class RestServer
                     while(users.next())
                         if(users.getString(1).equals(friendships.getString(2)))
                         {
-                            friends += users.getString(1) + " " + users.getString(2) + " " + users.getString(3) + " " + users.getString(4) + "\n";
+                            friends += users.getString(1) + " mpla1 " + users.getString(2) + " mpla1 " + users.getString(3) + " mpla1 " + users.getString(4) + "m2\n";
                             break;
                         }
                 }   
-                else if(friendships.getString(2).equals(friendships.getString(2)))
+                else if(friendships.getString(2).equals(username))
                 {
                     while(users.next())
                         if(users.getString(1).equals(friendships.getString(1)))
                         {
-                            friends += users.getString(1) + " " + users.getString(2) + " " + users.getString(3) + " " + users.getString(4) + "\n";
+                            friends += users.getString(1) + " mpla1 " + users.getString(2) + " mpla1 " + users.getString(3) + " mpla1 " + users.getString(4) + " m2\n";
                             break;
                         }
                 }
@@ -172,7 +177,7 @@ public class RestServer
         }
         catch (SQLException | JSONException ex)
         {
-            System.err.println("Something went wrong (Friends)!");
+            System.err.println("Something went wrong (ShowFriends)!");
         }
         
         return Response.status(201).entity("").build();
