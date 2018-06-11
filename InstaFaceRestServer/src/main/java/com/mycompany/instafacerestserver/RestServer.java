@@ -5,7 +5,6 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response; 
@@ -21,13 +20,13 @@ public class RestServer
 
     @Path("/signup")
     @POST
-    public Response InsertUser(String jsonString)
+    public Response SignUp(String jsonString)
     {
         try
         {
             Connect();
             JSONObject json = new JSONObject(jsonString);
-            User user = new User(json.getString("Name"), json.getString("Surname"), json.getString("Username"), json.getString("Password"), json.getInt("Genre"), json.getString("Country"), json.getString("Town"));
+            User user = new User(json.getString("Name"), json.getString("Surname"), json.getString("Username"), json.getString("Password"), json.getInt("Genre"), json.getString("Description"), json.getString("Country"), json.getString("Town"));
             
             ResultSet users = Connection.createStatement().executeQuery("SELECT Username FROM Users");
             while(users.next())
@@ -37,14 +36,15 @@ public class RestServer
                     return Response.status(201).entity("").build();
                 }
 
-            PreparedStatement prep = Connection.prepareStatement("INSERT INTO Users (Name, Surname, Username, Password, Genre, Country, Town) VALUES (?, ?, ?, ?, ?, ?, ?);");
+            PreparedStatement prep = Connection.prepareStatement("INSERT INTO Users (Name, Surname, Username, Password, Genre, Description, Country, Town) VALUES (?, ?, ?, ?, ?, ?, ?, ?);");
             prep.setString(1, user.getName());
             prep.setString(2, user.getSurname());
             prep.setString(3, user.getUsername());
             prep.setString(4, user.getPassword());
             prep.setInt(5, user.getGenre());
-            prep.setString(6, user.getCountry());
-            prep.setString(7, user.getTown());
+            prep.setString(6, user.getDescription());
+            prep.setString(7, user.getCountry());
+            prep.setString(8, user.getTown());
             prep.addBatch();
             prep.executeBatch();
             Disconnect();
@@ -52,7 +52,7 @@ public class RestServer
         }
         catch (SQLException | JSONException ex)
         {
-            System.err.println("Something went wrong (InsertUser)!");
+            System.err.println("Something went wrong (SignUp)!");
         }
         
         return Response.status(202).entity("").build();
@@ -60,7 +60,7 @@ public class RestServer
     
     @Path("/signin")
     @POST
-    public Response GetUser(String jsonString)
+    public Response SignIn(String jsonString)
     {
         try
         {
@@ -68,12 +68,13 @@ public class RestServer
             JSONObject json = new JSONObject(jsonString);
             User user = new User(json.getString("Username"), json.getString("Password"));
             
-            ResultSet users = Connection.createStatement().executeQuery("SELECT Username, Password FROM Users");
+            ResultSet users = Connection.createStatement().executeQuery("SELECT * FROM Users");
             while(users.next())
-                if(users.getString(1).equals(user.getUsername()) && users.getString(2).equals(user.getPassword()))
+                if(users.getString(4).equals(user.getUsername()) && users.getString(5).equals(user.getPassword()))
                 {
+                    String str = new User(users.getString(2), users.getString(3), users.getString(4), users.getString(5), users.getInt(6), users.getString(7), users.getString(8), users.getString(9)).ToJSON();
                     Disconnect();
-                    return Response.status(200).entity("").build();
+                    return Response.status(200).entity(str).build();
                 }
 
             Disconnect();
@@ -81,7 +82,7 @@ public class RestServer
         }
         catch (SQLException | JSONException ex)
         {
-            System.err.println("Something went wrong (GetUser)!");
+            System.err.println("Something went wrong (SignIn)!");
         }
         
         return Response.status(202).entity("").build();

@@ -10,10 +10,15 @@ import javax.ws.rs.core.Response;
 import java.awt.Color;
 import java.awt.GridLayout;
 import java.awt.TextField;
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.xml.bind.DatatypeConverter;
+import org.json.JSONObject;
 
 public class InstaFace extends JFrame
 {
@@ -22,14 +27,10 @@ public class InstaFace extends JFrame
     Client Client = ClientBuilder.newClient();
     
     JLabel UsernameLabel = new JLabel("", SwingConstants.CENTER);
-    JLabel Username = new JLabel("Username", SwingConstants.CENTER);
-    JLabel Password = new JLabel("Password", SwingConstants.CENTER);
-    JLabel PasswordLabel = new JLabel("Password");
-    JLabel NameLabel = new JLabel("Name");
-    JLabel SurnameLabel = new JLabel("Surname");
+    JLabel NameSurnameLabel = new JLabel("", SwingConstants.CENTER);
     
-    JPanel LogPanel = new JPanel();
-    JPanel MainPanel = new JPanel();
+    JPanel LogPanel = new JPanel(new GridLayout(0, 4));
+    JPanel MainPanel = new JPanel(new GridLayout(0, 4));
 
     public InstaFace()
     {
@@ -60,9 +61,10 @@ public class InstaFace extends JFrame
         JPasswordField PasswordField = new JPasswordField();
         JRadioButton MaleRadioButton = new JRadioButton("Male");
         JRadioButton FemaleRadioButton = new JRadioButton("Female");
+        TextField DescriptionTextField = new TextField();
         TextField CountryTextField = new TextField();
         TextField TownTextField = new TextField();
-        JTextField UsernameSignIn = new JTextField();//auta kena meta
+        JTextField UsernameSignIn = new JTextField();
         JPasswordField PasswordSignIn = new JPasswordField();
         JButton SignInButton = new JButton("Sign In");
         
@@ -88,9 +90,8 @@ public class InstaFace extends JFrame
                             MaleRadioButton.setSelected(false);
                     }
                 });     
-                
-                JPanel SignUpPanel = new JPanel();
-                SignUpPanel.setLayout(new GridLayout(0, 2));
+
+                JPanel SignUpPanel = new JPanel(new GridLayout(0, 2));
                 SignUpPanel.add(new JLabel("Name"));
                 SignUpPanel.add(NameTextField);
                 SignUpPanel.add(new JLabel("Surname"));
@@ -101,6 +102,8 @@ public class InstaFace extends JFrame
                 SignUpPanel.add(PasswordField);
                 SignUpPanel.add(MaleRadioButton);
                 SignUpPanel.add(FemaleRadioButton);
+                SignUpPanel.add(new JLabel("Description"));
+                SignUpPanel.add(DescriptionTextField);
                 SignUpPanel.add(new JLabel("Country"));
                 SignUpPanel.add(CountryTextField);
                 SignUpPanel.add(new JLabel("Town"));
@@ -112,14 +115,16 @@ public class InstaFace extends JFrame
                 PasswordField.setText("");
                 MaleRadioButton.setSelected(false);
                 FemaleRadioButton.setSelected(false);
+                DescriptionTextField.setText("");
                 CountryTextField.setText("");
                 TownTextField.setText("");
                     
                 String name;
                 String surname;
                 String username;
-                String password;
+                char[] password;
                 int genre;
+                String description;
                 String country;
                 String town;
                 
@@ -133,10 +138,8 @@ public class InstaFace extends JFrame
                         name = NameTextField.getText();
                         surname = SurnameTextField.getText();
                         username = UsernameTextField.getText();
-                        password = "";
-                        for(char c : PasswordField.getPassword())
-                            password += c;
-                        
+                        password = PasswordField.getPassword();
+                        description = DescriptionTextField.getText();
                         country = CountryTextField.getText();
                         town = TownTextField.getText();
 
@@ -144,7 +147,7 @@ public class InstaFace extends JFrame
                         if(name.length() == 0
                             || surname.length() == 0
                             || username.length() == 0
-                            || password.length() == 0
+                            || password.length == 0
                             || (!MaleRadioButton.isSelected() && !FemaleRadioButton.isSelected())
                             || country.length() == 0
                             || town.length() == 0)
@@ -162,14 +165,14 @@ public class InstaFace extends JFrame
                     genre = 2;
                 
                 WebTarget target = Client.target(Target + "signup");
-                Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(new User(name, surname, username, password, genre, country, town).ToJSON()));
+                Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(new User(name, surname, username, Hash(password), genre, description, country, town).ToJSON()));
 
                 if (response.getStatus() == 200)
                     JOptionPane.showMessageDialog(null, "Successful sign up!");
                 else if (response.getStatus() == 201)
                     JOptionPane.showMessageDialog(null, "Username already exists!");
                 else
-                JOptionPane.showMessageDialog(null, "Something went wrong!");
+                    JOptionPane.showMessageDialog(null, "Something went wrong!");
             }
         });
         
@@ -179,17 +182,15 @@ public class InstaFace extends JFrame
             public void mouseClicked(java.awt.event.MouseEvent evt)
             {
                 String username = UsernameSignIn.getText();
-                String password = "";
-                for(char c : PasswordSignIn.getPassword())
-                    password += c;
+                char[] password = PasswordSignIn.getPassword();
 
-                if(username.length() == 0 || password.length() == 0)
+                if(username.length() == 0 || password.length == 0)
                 {
                     JOptionPane.showMessageDialog(null, "Please enter your credentials!");
                     return;
                 }
 
-                User = new User(username, password);
+                User = new User(username, Hash(password));
                 WebTarget target = Client.target(Target + "signin");
                 Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(User.ToJSON()));
 
@@ -200,6 +201,10 @@ public class InstaFace extends JFrame
                     
                     setSize(600, 200);
                     remove(LogPanel);
+                    
+                    JSONObject json = new JSONObject(response.readEntity(String.class));
+                    User = new User(json.getString("Name"), json.getString("Surname"), json.getString("Username"), json.getString("Password"), json.getInt("Genre"), json.getString("Description"), json.getString("Country"), json.getString("Town"));
+                    NameSurnameLabel.setText(User.getName() + " " + User.getSurname());
                     UsernameLabel.setText(User.getUsername());
                     add(MainPanel);
                 }
@@ -223,13 +228,12 @@ public class InstaFace extends JFrame
     public void CreateMainPanel()
     {
         JButton SettingsButton = new JButton("Settings");
-//        JPanel SettingsPanel = new JPanel();
         JButton SignOutButton = new JButton("Sign Out");
         JTextField AddFriendTextField = new JTextField();
-        JButton AddFriendButton = new JButton("Add Friend");
+        JButton AddFriendButton = new JButton("Add");
         JButton ShowFriendsButton = new JButton("Friends");
         JTextField DeleteFriendTextField = new JTextField();
-        JButton DeleteFriendButton = new JButton("Delete Friend");
+        JButton DeleteFriendButton = new JButton("Delete");
 
         SettingsButton.setFocusable(false);
         SettingsButton.addMouseListener(new java.awt.event.MouseAdapter()
@@ -239,16 +243,6 @@ public class InstaFace extends JFrame
                 //Settings();
             }
         });
-        /*
-        SettingsPanel.setLayout(new GridLayout(0, 2));
-        SettingsPanel.add(PasswordLabel);
-        SettingsPanel.add(PasswordField);
-        SettingsPanel.add(NameLabel);
-        SettingsPanel.add(NameTextField);
-        SettingsPanel.add(SurnameLabel);
-        SettingsPanel.add(SurnameTextField);
-        SettingsPanel.add(EmailLabel);
-        SettingsPanel.add(EmailTextField);*/
         
         SignOutButton.setFocusable(false);
         SignOutButton.addMouseListener(new java.awt.event.MouseAdapter()
@@ -257,7 +251,6 @@ public class InstaFace extends JFrame
             {
                 setSize(400, 100);
                 remove(MainPanel);
-                User = null;
                 add(LogPanel);
             }
         });
@@ -307,6 +300,36 @@ public class InstaFace extends JFrame
 
                 if (response.getStatus() == 200)
                 {
+                    String[] friends = response.readEntity(String.class).split("\n");
+                    JPanel ShowFriendsPanel = new JPanel();
+                    ShowFriendsPanel.setLayout(new GridLayout(0, 7));
+                    ShowFriendsPanel.add(new JLabel("Name"));
+                    ShowFriendsPanel.add(new JLabel("Surname"));
+                    ShowFriendsPanel.add(new JLabel("Birthdate"));
+                    ShowFriendsPanel.add(new JLabel("Genre"));
+                    ShowFriendsPanel.add(new JLabel("Description"));
+                    ShowFriendsPanel.add(new JLabel("Country"));
+                    ShowFriendsPanel.add(new JLabel("Town"));
+                    ShowFriendsPanel.add(new JLabel("Username"));
+                    
+                    for(String friend : friends)
+                    {
+                        JSONObject json  = new JSONObject(friend);
+                        ShowFriendsPanel.add(new JLabel(json.getString("Name")));
+                        ShowFriendsPanel.add(new JLabel(json.getString("Surname")));
+                        ShowFriendsPanel.add(new JLabel(json.getString("Birthdate")));
+                        ShowFriendsPanel.add(new JLabel(json.getString("Username")));
+                        String genre;
+                        if(json.getInt("Genre") == 1)
+                            genre  = "Male";
+                        else
+                            genre = "Female";
+                        ShowFriendsPanel.add(new JLabel(genre));
+                        ShowFriendsPanel.add(new JLabel(json.getString("Description")));
+                        ShowFriendsPanel.add(new JLabel(json.getString("Country")));
+                        ShowFriendsPanel.add(new JLabel(json.getString("Town")));
+                    }
+                    
                     JTextArea FriendsTextArea = new JTextArea(response.readEntity(String.class));
                     FriendsTextArea.setFocusable(false);
                     JOptionPane.showConfirmDialog(null, FriendsTextArea, "Friends", JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE);
@@ -351,41 +374,36 @@ public class InstaFace extends JFrame
             }
         });
         
-        MainPanel.setLayout(new GridLayout(0, 3));
+        MainPanel.add(NameSurnameLabel);
         MainPanel.add(UsernameLabel);
         MainPanel.add(SettingsButton);
         MainPanel.add(SignOutButton);
+        MainPanel.add(new JLabel("Add Friend", SwingConstants.CENTER));
         MainPanel.add(AddFriendTextField);
         MainPanel.add(AddFriendButton);
         MainPanel.add(ShowFriendsButton);
+        MainPanel.add(new JLabel("Delete Friend", SwingConstants.CENTER));
         MainPanel.add(DeleteFriendTextField);
         MainPanel.add(DeleteFriendButton);
     }
-    /*
-    public void Settings()
+    
+    public String Hash(char[] passwordArr)
     {
-        Object []options= {"Save", "Cancel"};
-        int option = JOptionPane.showOptionDialog(null, SettingsPanel, "Settings", JOptionPane.DEFAULT_OPTION, JOptionPane.DEFAULT_OPTION, null, options, null);
-        if(option == 0)
+        try
         {
+            String password = "";
+            for(char c : passwordArr)
+                password += c;
             
-            
-            WebTarget target = Client.target(Target + "settings");
-            Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(User.getUsername()));
+            MessageDigest msdDigest = MessageDigest.getInstance("SHA-1");
+            msdDigest.update(password.getBytes("UTF-8"), 0, password.length());
+            return DatatypeConverter.printHexBinary(msdDigest.digest());
+        }
+        catch (UnsupportedEncodingException | NoSuchAlgorithmException e)
+        {
+            System.err.println("Something went wrong (HashPassword)!");
+        }
         
-        if (response.getStatus() == 200)
-        {
-            
-        }
-        }
-
-
-//        WebTarget target = Client.target(Target + "settings");
-//        Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(User.getUsername()));
-//        
-//        if (response.getStatus() == 200)
-//        {
-//            
-//        }
-    }*/
+        return null;
+    }
 }
