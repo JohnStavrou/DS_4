@@ -283,6 +283,82 @@ public class RestServer
         return Response.status(203).entity("").build();
     }
     
+    @Path("/posts")
+    @POST
+    public Response ShowPosts(String jsonString)
+    {
+        try
+        {
+            Connect();
+            JSONObject json = new JSONObject(jsonString);
+            User user = new User(json.getString("Name"), json.getString("Surname"), json.getString("Username"), json.getString("Password"), json.getInt("Genre"), json.getString("Description"), json.getString("Country"), json.getString("Town"));
+
+            String Posts = "";
+            ResultSet posts = Connection.createStatement().executeQuery("SELECT * FROM Posts");
+            while(posts.next())
+                if(posts.getString(2).equals(user.getUsername()))
+                    Posts += new Post(posts.getInt(1), posts.getString(2), posts.getString(3), posts.getString(4)).ToJSON() + "\n";
+
+            Disconnect();
+            if(Posts.equals(""))
+                return Response.status(201).entity("").build();
+            else
+                return Response.status(200).entity(Posts).build();
+        }
+        catch (SQLException | JSONException ex)
+        {
+            System.err.println("Something went wrong (ShowPosts)!");
+        }
+        
+        return Response.status(202).entity("").build();
+    }
+    /*
+    @Path("/deletefriend")
+    @POST
+    public Response DeletePost(String jsonString)
+    {
+        try
+        {
+            Connect();
+            JSONObject json = new JSONObject(jsonString);
+            Post post = new Post(json.getString("Id"), json.getString("User1"), json.getString("User2"), json.getString("User1"));
+            
+            boolean exists = false;
+            ResultSet users = Connection.createStatement().executeQuery("SELECT Username FROM Users");
+            while(users.next())
+                if(users.getString(1).equals(friendship.getUser2()))
+                {
+                    exists = true;
+                    break;
+                }
+            
+            if(!exists)
+            {
+                Disconnect();
+                return Response.status(202).entity("").build();
+            }
+            
+            ResultSet friendships = Connection.createStatement().executeQuery("SELECT * FROM Friendships");
+            while(friendships.next())
+                if((friendships.getString(2).equals(friendship.getUser1()) && friendships.getString(3).equals(friendship.getUser2()))
+                   || (friendships.getString(2).equals(friendship.getUser2()) && friendships.getString(3).equals(friendship.getUser1())))
+                {
+                    Connection.createStatement().execute("DELETE FROM Friendships WHERE Id=" + friendships.getInt(1) + ";");
+                    Disconnect();
+                    return Response.status(200).entity("").build();
+                }
+            
+            Disconnect();
+            return Response.status(201).entity("").build();
+        }
+        catch (SQLException | JSONException ex)
+        {
+            System.err.println("Something went wrong (DeleteFriend)!");
+        }
+        
+        return Response.status(203).entity("").build();
+    }*/
+    
     public void Connect()
     {
         try
