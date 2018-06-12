@@ -138,56 +138,52 @@ public class RestServer
         return Response.status(203).entity("").build();
     }
     
-    @Path("/showfriends")
+    @Path("/friends")
     @POST
-    public Response ShowFriends(String username)
+    public Response ShowFriends(String jsonString)
     {
         try
         {
             Connect();
+            JSONObject json = new JSONObject(jsonString);
+            User user = new User(json.getString("Username"), json.getString("Password"));
+
             String friends = "";
             ResultSet friendships = Connection.createStatement().executeQuery("SELECT User1, User2 FROM Friendships");
-            ResultSet users = Connection.createStatement().executeQuery("SELECT Name, Surname, Username, Genre, Country, Town FROM Users");
+            ResultSet users = Connection.createStatement().executeQuery("SELECT * FROM Users");
 
-            String genre;
-            int counter = 0;
             while(friendships.next())
-                if(friendships.getString(1).equals(username))
+                if(friendships.getString(1).equals(user.getUsername()))
                 {
                     while(users.next())
-                        if(users.getString(1).equals(friendships.getString(2)))
+                        if(users.getString(3).equals(friendships.getString(2)))
                         {
-                            if(users.getInt(4) == 1)
-                                genre = "Male";
-                            else
-                                genre = "Female";
-                            friends += ++counter + ") " +  users.getString(1) + " " + users.getString(2) + " " + users.getString(3) + " " + genre + " " +  users.getString(5) + " " + users.getString(6) + "\n";
+                            friends += new User(users.getString(2), users.getString(3), users.getString(4), users.getString(5), users.getInt(6), users.getString(7), users.getString(8), users.getString(9)).ToJSON() + "\n";
                             break;
                         }
                 }   
-                else if(friendships.getString(2).equals(username))
+                else if(friendships.getString(2).equals(user.getUsername()))
                 {
                     while(users.next())
-                        if(users.getString(1).equals(friendships.getString(1)))
+                        if(users.getString(3).equals(friendships.getString(1)))
                         {
-                            if(users.getInt(4) == 1)
-                                genre = "Male";
-                            else
-                                genre = "Female";
-                            friends += ++counter + ") " + users.getString(1) + " " + users.getString(2) + " " + users.getString(3) + " " + genre + " " +  users.getString(5) + " " + users.getString(6) + "\n";
+                            friends += new User(users.getString(2), users.getString(3), users.getString(4), users.getString(5), users.getInt(6), users.getString(7), users.getString(8), users.getString(9)).ToJSON() + "\n";
                             break;
                         }
                 }
             
             Disconnect();
-            return Response.status(200).entity(friends).build();
+            if(friends.equals(""))
+                return Response.status(201).entity("").build();
+            else
+                return Response.status(200).entity(friends).build();
         }
         catch (SQLException | JSONException ex)
         {
             System.err.println("Something went wrong (ShowFriends)!");
         }
         
-        return Response.status(201).entity("").build();
+        return Response.status(202).entity("").build();
     }
     
     @Path("/deletefriend")

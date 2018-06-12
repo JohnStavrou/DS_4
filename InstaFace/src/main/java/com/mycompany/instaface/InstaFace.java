@@ -295,45 +295,46 @@ public class InstaFace extends JFrame
         {
             public void mouseClicked(java.awt.event.MouseEvent evt)
             {
-                WebTarget target = Client.target(Target + "showfriends");
-                Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(User.getUsername()));
+                WebTarget target = Client.target(Target + "friends");
+                Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(User.ToJSON()));
 
                 if (response.getStatus() == 200)
                 {
                     String[] friends = response.readEntity(String.class).split("\n");
                     JPanel ShowFriendsPanel = new JPanel();
                     ShowFriendsPanel.setLayout(new GridLayout(0, 7));
-                    ShowFriendsPanel.add(new JLabel("Name"));
-                    ShowFriendsPanel.add(new JLabel("Surname"));
-                    ShowFriendsPanel.add(new JLabel("Birthdate"));
-                    ShowFriendsPanel.add(new JLabel("Genre"));
-                    ShowFriendsPanel.add(new JLabel("Description"));
-                    ShowFriendsPanel.add(new JLabel("Country"));
-                    ShowFriendsPanel.add(new JLabel("Town"));
-                    ShowFriendsPanel.add(new JLabel("Username"));
+                    ShowFriendsPanel.add(new JLabel("Name", SwingConstants.CENTER));
+                    ShowFriendsPanel.add(new JLabel("Surname", SwingConstants.CENTER));
+                    ShowFriendsPanel.add(new JLabel("Username", SwingConstants.CENTER));
+                    ShowFriendsPanel.add(new JLabel("Genre", SwingConstants.CENTER));
+                    ShowFriendsPanel.add(new JLabel("Description", SwingConstants.CENTER));
+                    ShowFriendsPanel.add(new JLabel("Country", SwingConstants.CENTER));
+                    ShowFriendsPanel.add(new JLabel("Town", SwingConstants.CENTER));
+                    ShowFriendsPanel.add(new JLabel());
+                    ShowFriendsPanel.add(new JLabel());
+                    ShowFriendsPanel.add(new JLabel());
+                    ShowFriendsPanel.add(new JLabel());
+                    ShowFriendsPanel.add(new JLabel());
+                    ShowFriendsPanel.add(new JLabel());
+                    ShowFriendsPanel.add(new JLabel());
                     
                     for(String friend : friends)
                     {
                         JSONObject json  = new JSONObject(friend);
-                        ShowFriendsPanel.add(new JLabel(json.getString("Name")));
-                        ShowFriendsPanel.add(new JLabel(json.getString("Surname")));
-                        ShowFriendsPanel.add(new JLabel(json.getString("Birthdate")));
-                        ShowFriendsPanel.add(new JLabel(json.getString("Username")));
-                        String genre;
-                        if(json.getInt("Genre") == 1)
-                            genre  = "Male";
-                        else
-                            genre = "Female";
-                        ShowFriendsPanel.add(new JLabel(genre));
-                        ShowFriendsPanel.add(new JLabel(json.getString("Description")));
-                        ShowFriendsPanel.add(new JLabel(json.getString("Country")));
-                        ShowFriendsPanel.add(new JLabel(json.getString("Town")));
+                        User user = new User(json.getString("Name"), json.getString("Surname"), json.getString("Username"), json.getString("Password"), json.getInt("Genre"), json.getString("Description"), json.getString("Country"), json.getString("Town"));
+                        ShowFriendsPanel.add(new JLabel(user.getName(), SwingConstants.CENTER));
+                        ShowFriendsPanel.add(new JLabel(user.getSurname(), SwingConstants.CENTER));
+                        ShowFriendsPanel.add(new JLabel(user.getUsername(), SwingConstants.CENTER));
+                        ShowFriendsPanel.add(new JLabel(user.getGenreStr(), SwingConstants.CENTER));
+                        ShowFriendsPanel.add(new JLabel(user.getDescription(), SwingConstants.CENTER));
+                        ShowFriendsPanel.add(new JLabel(user.getCountry(), SwingConstants.CENTER));
+                        ShowFriendsPanel.add(new JLabel(user.getTown(), SwingConstants.CENTER));
                     }
                     
-                    JTextArea FriendsTextArea = new JTextArea(response.readEntity(String.class));
-                    FriendsTextArea.setFocusable(false);
-                    JOptionPane.showConfirmDialog(null, FriendsTextArea, "Friends", JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE);
+                    JOptionPane.showConfirmDialog(null, ShowFriendsPanel, "Friends", JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE);
                 }
+                else if(response.getStatus() == 201)
+                    JOptionPane.showMessageDialog(null, "There are no users in your friendlist!");
                 else
                     JOptionPane.showMessageDialog(null, "Something went wrong!");
             }
