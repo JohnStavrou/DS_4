@@ -156,7 +156,7 @@ public class RestServer
                 if(friendships.getString(1).equals(user.getUsername()))
                 {
                     while(users.next())
-                        if(users.getString(3).equals(friendships.getString(2)))
+                        if(users.getString(4).equals(friendships.getString(2)))
                         {
                             friends += new User(users.getString(2), users.getString(3), users.getString(4), users.getString(5), users.getInt(6), users.getString(7), users.getString(8), users.getString(9)).ToJSON() + "\n";
                             break;
@@ -165,7 +165,7 @@ public class RestServer
                 else if(friendships.getString(2).equals(user.getUsername()))
                 {
                     while(users.next())
-                        if(users.getString(3).equals(friendships.getString(1)))
+                        if(users.getString(4).equals(friendships.getString(1)))
                         {
                             friends += new User(users.getString(2), users.getString(3), users.getString(4), users.getString(5), users.getInt(6), users.getString(7), users.getString(8), users.getString(9)).ToJSON() + "\n";
                             break;
@@ -217,7 +217,6 @@ public class RestServer
                    || (friendships.getString(2).equals(friendship.getUser2()) && friendships.getString(3).equals(friendship.getUser1())))
                 {
                     Connection.createStatement().execute("DELETE FROM Friendships WHERE Id=" + friendships.getInt(1) + ";");
-                    System.out.println("OK");
                     Disconnect();
                     return Response.status(200).entity("").build();
                 }
@@ -228,6 +227,57 @@ public class RestServer
         catch (SQLException | JSONException ex)
         {
             System.err.println("Something went wrong (DeleteFriend)!");
+        }
+        
+        return Response.status(203).entity("").build();
+    }
+    
+    @Path("/createpost")
+    @POST
+    public Response CreatePost(String jsonString)
+    {
+        try
+        {
+            Connect();
+            JSONObject json = new JSONObject(jsonString);
+            Post post = new Post(json.getString("User1"), json.getString("User2"), json.getString("Text"));
+            
+            boolean exists = false;
+            ResultSet users = Connection.createStatement().executeQuery("SELECT Username FROM Users");
+            while(users.next())
+                if(users.getString(1).equals(post.getUser2()))
+                {
+                    exists = true;
+                    break;
+                }
+            
+            if(!exists)
+            {
+                Disconnect();
+                return Response.status(201).entity("").build();
+            }
+            
+            ResultSet friendships = Connection.createStatement().executeQuery("SELECT User1, User2 FROM Friendships");
+            while(friendships.next())
+                if((friendships.getString(1).equals(post.getUser1()) && friendships.getString(2).equals(post.getUser2()))
+                   || (friendships.getString(1).equals(post.getUser2()) && friendships.getString(2).equals(post.getUser1())))
+                {
+                    PreparedStatement prep = Connection.prepareStatement("INSERT INTO Posts (User1, User2, Text) VALUES (?, ?, ?);");
+                    prep.setString(1, post.getUser1());
+                    prep.setString(2, post.getUser2());
+                    prep.setString(3, post.getText());
+                    prep.addBatch();
+                    prep.executeBatch();
+                    Disconnect();
+                    return Response.status(200).entity("").build();
+                }
+            
+            Disconnect();
+            return Response.status(202).entity("").build();
+        }
+        catch (SQLException | JSONException ex)
+        {
+            System.err.println("Something went wrong (CreatePost)!");
         }
         
         return Response.status(203).entity("").build();

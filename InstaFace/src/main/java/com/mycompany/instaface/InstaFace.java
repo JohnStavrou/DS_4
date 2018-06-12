@@ -234,6 +234,9 @@ public class InstaFace extends JFrame
         JButton ShowFriendsButton = new JButton("Friends");
         JTextField DeleteFriendTextField = new JTextField();
         JButton DeleteFriendButton = new JButton("Delete");
+        JButton CreatePostButton = new JButton("Create Post");
+        JButton DeletePostButton = new JButton("Delete Post");
+        JButton ShowPostsButton = new JButton("Posts");
 
         SettingsButton.setFocusable(false);
         SettingsButton.addMouseListener(new java.awt.event.MouseAdapter()
@@ -301,8 +304,7 @@ public class InstaFace extends JFrame
                 if (response.getStatus() == 200)
                 {
                     String[] friends = response.readEntity(String.class).split("\n");
-                    JPanel ShowFriendsPanel = new JPanel();
-                    ShowFriendsPanel.setLayout(new GridLayout(0, 7));
+                    JPanel ShowFriendsPanel = new JPanel(new GridLayout(0, 7));
                     ShowFriendsPanel.add(new JLabel("Name", SwingConstants.CENTER));
                     ShowFriendsPanel.add(new JLabel("Surname", SwingConstants.CENTER));
                     ShowFriendsPanel.add(new JLabel("Username", SwingConstants.CENTER));
@@ -375,6 +377,73 @@ public class InstaFace extends JFrame
             }
         });
         
+        CreatePostButton.setFocusable(false);
+        CreatePostButton.addMouseListener(new java.awt.event.MouseAdapter()
+        {
+            public void mouseClicked(java.awt.event.MouseEvent evt)
+            {
+                JPanel CreatePostPanel = new JPanel(new GridLayout(0, 2));
+                JTextField FriendTextField = new JTextField();
+                JTextField PostTextField = new JTextField();
+                CreatePostPanel.add(new JLabel("Friend Username", SwingConstants.CENTER));
+                CreatePostPanel.add(FriendTextField);
+                CreatePostPanel.add(new JLabel("Text", SwingConstants.CENTER));
+                CreatePostPanel.add(PostTextField);
+                
+                String username;
+                String text;
+                
+                boolean valid;
+                do
+                {
+                    Object []options= {"Post", "Cancel"};
+                    int option = JOptionPane.showOptionDialog(null, CreatePostPanel, "Create Post", JOptionPane.DEFAULT_OPTION, JOptionPane.DEFAULT_OPTION, null, options, null);
+                    if(option == 0)
+                    {
+                        username = FriendTextField.getText();
+                        text = PostTextField.getText();
+
+                        valid = true;
+                        if(username.length() == 0 || text.length() == 0)
+                        {
+                            JOptionPane.showMessageDialog(null, "Please fill all the fields!");
+                            valid = false;
+                        }
+                        else if(username.equals(User.getUsername()))
+                        {
+                            JOptionPane.showMessageDialog(null, "Wrong input!");
+                            valid = false;
+                        }
+                        else
+                        {
+                            WebTarget target = Client.target(Target + "createpost");
+                            Post post = new Post(User.getUsername(), username, text);
+                            Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(post.ToJSON()));
+
+                            if (response.getStatus() == 200)
+                                JOptionPane.showMessageDialog(null, "Post created successfully!");
+                            else if(response.getStatus() == 201)
+                            {
+                                JOptionPane.showMessageDialog(null, "There is no user with username " + username + "!");
+                                valid = false;
+                            }
+                            else if(response.getStatus() == 202)
+                            {
+                                JOptionPane.showMessageDialog(null, "You are not friends with user " + username +  "!");
+                                valid = false;
+                            }
+                            else
+                                JOptionPane.showMessageDialog(null, "Something went wrong!");
+                        }
+                    }
+                    else return;
+                } while(!valid);
+            }
+        });
+        
+        
+        
+        
         MainPanel.add(NameSurnameLabel);
         MainPanel.add(UsernameLabel);
         MainPanel.add(SettingsButton);
@@ -386,6 +455,11 @@ public class InstaFace extends JFrame
         MainPanel.add(new JLabel("Delete Friend", SwingConstants.CENTER));
         MainPanel.add(DeleteFriendTextField);
         MainPanel.add(DeleteFriendButton);
+        MainPanel.add(new JLabel());
+        MainPanel.add(new JLabel());
+        MainPanel.add(CreatePostButton);
+        MainPanel.add(DeletePostButton);
+        MainPanel.add(ShowPostsButton);
     }
     
     public String Hash(char[] passwordArr)
@@ -408,3 +482,4 @@ public class InstaFace extends JFrame
         return null;
     }
 }
+
