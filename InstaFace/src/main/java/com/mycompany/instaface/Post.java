@@ -23,12 +23,9 @@ public class Post
         this.User2 = User2;
         this.Text = Text;
     }
-    
-    public Post(int Id)
-    {
-        this.Id = Id;
-    }
 
+    public void setText(String Text) { this.Text = Text; }
+    
     public int getId() { return Id; }
     public String getUser1() { return User1; }
     public String getUser2() { return User2; }
@@ -37,6 +34,15 @@ public class Post
     public String ToJSON()
     {
         return new JSONObject()
+                    .put("User1", getUser1())
+                    .put("User2", getUser2())
+                    .put("Text", getText()).toString();
+    }
+    
+    public String ToJSON_ID()
+    {
+        return new JSONObject()
+                    .put("Id", getId())
                     .put("User1", getUser1())
                     .put("User2", getUser2())
                     .put("Text", getText()).toString();

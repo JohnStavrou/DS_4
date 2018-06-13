@@ -233,14 +233,12 @@ public class InstaFace extends JFrame
         JButton ShowFriendsButton = new JButton("Friends");
         JTextField DeleteFriendTextField = new JTextField();
         JButton DeleteFriendButton = new JButton("Delete");
+        JTextField EditPostTextField = new JTextField();
+        JButton EditPostButton = new JButton("Edit");
+        JButton ShowPostsButton = new JButton("Posts");
         JTextField DeletePostTextField = new JTextField();
         JButton DeletePostButton = new JButton("Delete");
-
         JButton CreatePostButton = new JButton("Create Post");
-        JButton EditPostButton = new JButton("Edit");
-        JTextField EditPostTextField = new JTextField();
-
-        JButton ShowPostsButton = new JButton("Posts");
 
         SignOutButton.setFocusable(false);
         SignOutButton.addMouseListener(new java.awt.event.MouseAdapter()
@@ -372,6 +370,132 @@ public class InstaFace extends JFrame
             }
         });
         
+        EditPostButton.setFocusable(false);
+        EditPostButton.addMouseListener(new java.awt.event.MouseAdapter()
+        {
+            public void mouseClicked(java.awt.event.MouseEvent evt)
+            {
+                String postid = EditPostTextField.getText();;
+
+                if(postid.length() == 0)
+                {
+                    JOptionPane.showMessageDialog(null, "Field is empty!");
+                    return;
+                }
+                
+                WebTarget target = Client.target(Target + "getpost");
+                Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(postid));
+                
+                if (response.getStatus() == 200)
+                {
+                    JSONObject json = new JSONObject(response.readEntity(String.class));
+                    Post post = new Post(json.getInt("Id"), json.getString("User1"), json.getString("User2"), json.getString("Text"));
+                    JPanel EditPostPanel = new JPanel(new GridLayout(0, 2));
+                    JTextField PostTextField = new JTextField(post.getText());
+                    EditPostPanel.add(new JLabel("Text", SwingConstants.CENTER));
+                    EditPostPanel.add(PostTextField);
+
+                    boolean valid;
+                    do
+                    {
+                        Object []options= {"Save", "Cancel"};
+                        int option = JOptionPane.showOptionDialog(null, EditPostPanel, "Edit Post", JOptionPane.DEFAULT_OPTION, JOptionPane.DEFAULT_OPTION, null, options, null);
+                        if(option == 0)
+                        {
+                            String text = PostTextField.getText();
+
+                            valid = true;
+                            if(text.length() == 0)
+                            {
+                                JOptionPane.showMessageDialog(null, "Field is empty!");
+                                valid = false;
+                            }
+                            else
+                            {
+                                target = Client.target(Target + "editpost");
+                                post.setText(text);
+                                response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(post.ToJSON_ID()));
+
+                                if (response.getStatus() == 200)
+                                    JOptionPane.showMessageDialog(null, "Post saved successfully!");
+                                else
+                                    JOptionPane.showMessageDialog(null, "Something went wrong!");
+                            }
+                        }
+                        else return;
+                    } while(!valid);
+                }
+                else if(response.getStatus() == 201)
+                    JOptionPane.showMessageDialog(null, "There is no post with id " + postid + "!");
+                else
+                    JOptionPane.showMessageDialog(null, "Something went wrong!");
+            }
+        });
+        
+        ShowPostsButton.setFocusable(false);
+        ShowPostsButton.addMouseListener(new java.awt.event.MouseAdapter()
+        {
+            public void mouseClicked(java.awt.event.MouseEvent evt)
+            {
+                WebTarget target = Client.target(Target + "posts");
+                Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(User.ToJSON()));
+
+                if (response.getStatus() == 200)
+                {
+                    String[] posts = response.readEntity(String.class).split("\n");
+                    JPanel ShowPostsPanel = new JPanel(new GridLayout(0, 3));
+                    ShowPostsPanel.add(new JLabel("Id", SwingConstants.CENTER));
+                    ShowPostsPanel.add(new JLabel("Friend", SwingConstants.CENTER));
+                    ShowPostsPanel.add(new JLabel("Text", SwingConstants.CENTER));
+                    ShowPostsPanel.add(new JLabel());
+                    ShowPostsPanel.add(new JLabel());
+                    ShowPostsPanel.add(new JLabel());
+                    
+                    for(String p : posts)
+                    {
+                        JSONObject json  = new JSONObject(p);
+                        Post post = new Post(json.getInt("Id"), json.getString("User1"), json.getString("User2"), json.getString("Text"));
+                        ShowPostsPanel.add(new JLabel(Integer.toString(post.getId()), SwingConstants.CENTER));
+                        ShowPostsPanel.add(new JLabel(post.getUser2(), SwingConstants.CENTER));
+                        ShowPostsPanel.add(new JLabel(post.getText(), SwingConstants.CENTER));
+                    }
+                    
+                    JOptionPane.showConfirmDialog(null, ShowPostsPanel, "Posts", JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE);
+                }
+                else if(response.getStatus() == 201)
+                    JOptionPane.showMessageDialog(null, "There are no posts!");
+                else
+                    JOptionPane.showMessageDialog(null, "Something went wrong!");
+            }
+        });
+        
+        DeletePostButton.setFocusable(false);
+        DeletePostButton.addMouseListener(new java.awt.event.MouseAdapter()
+        {
+            public void mouseClicked(java.awt.event.MouseEvent evt)
+            {
+                String postid = DeletePostTextField.getText();
+        
+                if(postid.length() == 0)
+                {
+                    JOptionPane.showMessageDialog(null, "Field is empty!");
+                    return;
+                }
+
+                WebTarget target = Client.target(Target + "deletepost");
+                Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(postid));
+
+                if (response.getStatus() == 200)
+                    JOptionPane.showMessageDialog(null, "Post deleted successfully!");
+                else if (response.getStatus() == 201)
+                    JOptionPane.showMessageDialog(null, "There is no post with id " + postid + "!");
+                else
+                    JOptionPane.showMessageDialog(null, "Something went wrong!");
+
+                DeletePostTextField.setText("");
+            }
+        });
+        
         CreatePostButton.setFocusable(false);
         CreatePostButton.addMouseListener(new java.awt.event.MouseAdapter()
         {
@@ -435,71 +559,6 @@ public class InstaFace extends JFrame
                 } while(!valid);
             }
         });
-        
-        ShowPostsButton.setFocusable(false);
-        ShowPostsButton.addMouseListener(new java.awt.event.MouseAdapter()
-        {
-            public void mouseClicked(java.awt.event.MouseEvent evt)
-            {
-                WebTarget target = Client.target(Target + "posts");
-                Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(User.ToJSON()));
-
-                if (response.getStatus() == 200)
-                {
-                    String[] posts = response.readEntity(String.class).split("\n");
-                    JPanel ShowPostsPanel = new JPanel(new GridLayout(0, 3));
-                    ShowPostsPanel.add(new JLabel("Id", SwingConstants.CENTER));
-                    ShowPostsPanel.add(new JLabel("Friend", SwingConstants.CENTER));
-                    ShowPostsPanel.add(new JLabel("Text", SwingConstants.CENTER));
-                    ShowPostsPanel.add(new JLabel());
-                    ShowPostsPanel.add(new JLabel());
-                    ShowPostsPanel.add(new JLabel());
-                    
-                    for(String p : posts)
-                    {
-                        JSONObject json  = new JSONObject(p);
-                        Post post = new Post(json.getInt("Id"), json.getString("User1"), json.getString("User2"), json.getString("Text"));
-                        ShowPostsPanel.add(new JLabel(Integer.toString(post.getId()), SwingConstants.CENTER));
-                        ShowPostsPanel.add(new JLabel(post.getUser2(), SwingConstants.CENTER));
-                        ShowPostsPanel.add(new JLabel(post.getText(), SwingConstants.CENTER));
-                    }
-                    
-                    JOptionPane.showConfirmDialog(null, ShowPostsPanel, "Posts", JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE);
-                }
-                else if(response.getStatus() == 201)
-                    JOptionPane.showMessageDialog(null, "There are no posts!");
-                else
-                    JOptionPane.showMessageDialog(null, "Something went wrong!");
-            }
-        });
-        
-        DeletePostButton.setFocusable(false);
-        DeleteFriendButton.addMouseListener(new java.awt.event.MouseAdapter()
-        {
-            public void mouseClicked(java.awt.event.MouseEvent evt)
-            {
-                String postid = DeletePostTextField.getText();
-        
-                if(postid.length() == 0)
-                {
-                    JOptionPane.showMessageDialog(null, "Field is empty!");
-                    return;
-                }
-
-                WebTarget target = Client.target(Target + "deletepost");
-                Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(new Post(Integer.parseInt(postid))));
-
-                if (response.getStatus() == 200)
-                    JOptionPane.showMessageDialog(null, "Post deleted successfully!");
-                else if (response.getStatus() == 201)
-                    JOptionPane.showMessageDialog(null, "There is no post with id " + postid + "!");
-                else
-                    JOptionPane.showMessageDialog(null, "Something went wrong!");
-
-                DeleteFriendTextField.setText("");
-            }
-        });
-        
         
         MainPanel.add(NameSurnameLabel);
         MainPanel.add(UsernameLabel);
