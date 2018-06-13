@@ -14,7 +14,7 @@ import org.json.JSONObject;
 @Path("/restserver")
 public class RestServer
 {
-    public String PATH = "C:\\Users\\JS\\Documents\\GitHub\\DS_4\\InstaFaceRestServer";
+    public String PATH = "C:\\Users\\George Tsiridis\\Documents\\GitHub\\DS_4\\InstaFaceRestServer";
     public String URL = "jdbc:sqlite:" + PATH + "\\instaface.db";
     Connection Connection;
 
