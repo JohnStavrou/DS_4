@@ -14,7 +14,16 @@ import org.json.JSONObject;
 @Path("/restserver")
 public class RestServer
 {
-    public String PATH = "C:\\Users\\George Tsiridis\\Documents\\GitHub\\DS_4\\InstaFaceRestServer";
+    /*
+      * Πριν την εκκίνηση του Web App σιγουρευτείτε οτι έχετε κάνει Clean & Rebuild για
+        να κατέβουν όλα τα απαραίτητα dependencies. 
+      * Στη συνέχεια σιγουρευτείτε οτι έχετε τρέξει το αρχείο Database.java αφού πρώτα βγάλετε
+        από σχόλιο τη συνάρτηση InitDB. Στη συνέχεια ξαναβάλτε τη σε σχόλιο για να μην ξανακαλεστεί.
+      * Στην παρακάτω μεταβλητη PATH κάντε επικόλληση το path στο οποίο δημιουργήθηκε η βάση, που
+        λογικά μέσα στο φάκελο InstaFaceRestServer. Έτσι δημιουργείται το URL με το οποίο γίνεται
+        η σύνδεση με τη βάση.
+    */
+    public String PATH = "C:\\Users\\JS\\Documents\\GitHub\\DS_4\\InstaFaceRestServer";
     public String URL = "jdbc:sqlite:" + PATH + "\\instaface.db";
     Connection Connection;
 
@@ -26,9 +35,10 @@ public class RestServer
         {
             Connect();
             
-            JSONObject json = new JSONObject(jsonString);
+            JSONObject json = new JSONObject(jsonString); // Γίνεται deserialize το string που έχει στείλει o client.
             User user = new User(json.getString("Name"), json.getString("Surname"), json.getString("Username"), json.getString("Password"), json.getInt("Genre"), json.getString("Description"), json.getString("Country"), json.getString("Town"));
             ResultSet users = Connection.createStatement().executeQuery("SELECT Username FROM Users");
+            // Ελέγχω αν το username υπάρχει στη βάση.
             while(users.next())
                 if(users.getString(1).equals(user.getUsername()))
                 {
@@ -36,6 +46,7 @@ public class RestServer
                     return Response.status(201).entity("").build();
                 }
 
+            // Αλλιώς εισάγω το χρήστη στη βάση.
             PreparedStatement prep = Connection.prepareStatement("INSERT INTO Users (Name, Surname, Username, Password, Genre, Description, Country, Town) VALUES (?, ?, ?, ?, ?, ?, ?, ?);");
             prep.setString(1, user.getName());
             prep.setString(2, user.getSurname());
@@ -71,6 +82,7 @@ public class RestServer
             JSONObject json = new JSONObject(jsonString);
             User user = new User(json.getString("Username"), json.getString("Password"));         
             ResultSet users = Connection.createStatement().executeQuery("SELECT * FROM Users");
+            // Ελέγχω αν ο χρήστης υπάρχει στη βάση.
             while(users.next())
                 if(users.getString(4).equals(user.getUsername()) && users.getString(5).equals(user.getPassword()))
                 {
@@ -104,6 +116,7 @@ public class RestServer
             Friendship friendship = new Friendship(json.getString("User1"), json.getString("User2"));            
             boolean exists = false;
             ResultSet users = Connection.createStatement().executeQuery("SELECT Username FROM Users");
+            // Ελέγχω αν υπάρχει το username του φίλου που έδωσε ο χρήστης.
             while(users.next())
                 if(users.getString(1).equals(friendship.getUser2()))
                 {
@@ -118,6 +131,7 @@ public class RestServer
             }
             
             ResultSet friendships = Connection.createStatement().executeQuery("SELECT User1, User2 FROM Friendships");
+            // Αφού ο χρήστης υπάρχει, ελέγχω αν υπάρχει φιλία μεταξύ τους.
             while(friendships.next())
                 if((friendships.getString(1).equals(friendship.getUser1()) && friendships.getString(2).equals(friendship.getUser2()))
                    || (friendships.getString(1).equals(friendship.getUser2()) && friendships.getString(2).equals(friendship.getUser1())))
@@ -126,6 +140,7 @@ public class RestServer
                     return Response.status(201).entity("").build();
                 }
             
+            // Αν δεν υπάρχει φιλία μεταξλυ τους, τη δημιουργώ.
             PreparedStatement prep = Connection.prepareStatement("INSERT INTO Friendships (User1, User2) VALUES (?, ?);");
             prep.setString(1, friendship.getUser1());
             prep.setString(2, friendship.getUser2());
@@ -159,6 +174,7 @@ public class RestServer
             ResultSet friendships = Connection.createStatement().executeQuery("SELECT User1, User2 FROM Friendships");
             ResultSet users = Connection.createStatement().executeQuery("SELECT * FROM Users");
 
+            // Παίρνω από τη βάση όλες τις φιλίες που περιέχουν στο User1 ή στο User2 το Username του χρήστη και αφού τις μετατρέψω σε json τις εισάγω γραμμή γραμμή σε ένα string.
             while(friendships.next())
                 if(friendships.getString(1).equals(user.getUsername()))
                 {
@@ -205,6 +221,7 @@ public class RestServer
             JSONObject json = new JSONObject(jsonString);
             Friendship friendship = new Friendship(json.getString("User1"), json.getString("User2"));
             
+            // Ελέγχω αν υπάρχει ο χρήστης που έδωσε ο χρήστης για διαγραφή.
             boolean exists = false;
             ResultSet users = Connection.createStatement().executeQuery("SELECT Username FROM Users");
             while(users.next())
@@ -220,6 +237,7 @@ public class RestServer
                 return Response.status(202).entity("").build();
             }
             
+            // Αν υπάρχει διαγράφω τη φιλία μεταξύ τους.
             ResultSet friendships = Connection.createStatement().executeQuery("SELECT * FROM Friendships");
             while(friendships.next())
                 if((friendships.getString(2).equals(friendship.getUser1()) && friendships.getString(3).equals(friendship.getUser2()))
@@ -252,6 +270,7 @@ public class RestServer
             Connect();
             
             ResultSet posts = Connection.createStatement().executeQuery("SELECT * FROM Posts");
+            // Ελεγχω αν υπάρχει το Post με το Id που έδωσε ο χρήστης.
             while(posts.next())
                 if(posts.getInt(1) == Integer.parseInt(postid))
                 {
@@ -283,9 +302,7 @@ public class RestServer
             
             JSONObject json = new JSONObject(jsonString);
             Post post = new Post(json.getInt("Id"), json.getString("User1"), json.getString("User2"), json.getString("Text"));
-            System.out.println(post.ToJSON());
             Connection.createStatement().executeUpdate("UPDATE Posts SET Text='" + post.getText() + "' WHERE Id=" + post.getId() +  ";");
-            System.out.println("OK");
             Disconnect();
             return Response.status(200).entity("").build();
         }
@@ -309,6 +326,7 @@ public class RestServer
             JSONObject json = new JSONObject(jsonString);
             User user = new User(json.getString("Name"), json.getString("Surname"), json.getString("Username"), json.getString("Password"), json.getInt("Genre"), json.getString("Description"), json.getString("Country"), json.getString("Town"));
 
+            // Ψάχνω στη βάση για τα Post που έχει κάνει ο χρήστης και αφού τα μετατρέψω σε json τα εισάγω γραμμή γραμμή σε ένα string που επιστρέφω στον client.
             String Posts = "";
             ResultSet posts = Connection.createStatement().executeQuery("SELECT * FROM Posts");
             while(posts.next())
@@ -339,6 +357,7 @@ public class RestServer
             Connect();
             
             ResultSet posts = Connection.createStatement().executeQuery("SELECT Id FROM Posts");
+            // Ελέγχω αν υπάρχει το Post με το Id που έδωσε ο χρήστης και αν υπάρχει διαγράφω το Post.
             while(posts.next())
                 if(posts.getInt(1) == Integer.parseInt(postid))
                 {
@@ -371,6 +390,7 @@ public class RestServer
             JSONObject json = new JSONObject(jsonString);
             Post post = new Post(json.getString("User1"), json.getString("User2"), json.getString("Text"));
             
+            // Ελέγχω αν υπάρχει ο χρήστης με το username που έδωσε ο client.
             boolean exists = false;
             ResultSet users = Connection.createStatement().executeQuery("SELECT Username FROM Users");
             while(users.next())
@@ -386,11 +406,13 @@ public class RestServer
                 return Response.status(201).entity("").build();
             }
             
+            // Αν υπάρχει ο χρήστης ελέγχω αν είναι φίλος με τον client.
             ResultSet friendships = Connection.createStatement().executeQuery("SELECT User1, User2 FROM Friendships");
             while(friendships.next())
                 if((friendships.getString(1).equals(post.getUser1()) && friendships.getString(2).equals(post.getUser2()))
                    || (friendships.getString(1).equals(post.getUser2()) && friendships.getString(2).equals(post.getUser1())))
                 {
+                    // Αν είναι φίλοι τοτε δημιουργώ το Post.
                     PreparedStatement prep = Connection.prepareStatement("INSERT INTO Posts (User1, User2, Text) VALUES (?, ?, ?);");
                     prep.setString(1, post.getUser1());
                     prep.setString(2, post.getUser2());

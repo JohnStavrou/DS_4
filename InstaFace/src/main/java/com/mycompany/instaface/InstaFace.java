@@ -23,7 +23,7 @@ import org.json.JSONObject;
 public class InstaFace extends JFrame
 {
     User User;
-    String Target = "http://localhost:8080/InstaFaceRestServer/api/restserver/";
+    String Target = "http://localhost:8080/InstaFaceRestServer/api/restserver/"; // Το βασικό Target URL που χρησιμοποιούμε.
     Client Client = ClientBuilder.newClient();
     
     JLabel UsernameLabel = new JLabel("", SwingConstants.CENTER);
@@ -164,7 +164,9 @@ public class InstaFace extends JFrame
                 else
                     genre = 2;
                 
+                // Θέτω target το αρχικό URL και του προσθέτω σε ποιο path του web app θα στέλνει για να κάνει εγγραφή.
                 WebTarget target = Client.target(Target + "signup");
+                // Του στέλνω σε json τα στοιχεία του χρήστη για να εγγράψει το χρήστη αν όλα είναι εντάξει.
                 Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(new User(name, surname, username, Hash(password), genre, description, country, town).ToJSON()));
 
                 if (response.getStatus() == 200)
@@ -191,7 +193,9 @@ public class InstaFace extends JFrame
                 }
 
                 User = new User(username, Hash(password));
+                // Θέτω target το αρχικό URL και του προσθέτω σε ποιο path του web app θα στέλνει για να κάνει είσοδο.
                 WebTarget target = Client.target(Target + "signin");
+                // Του στέλνω σε json τα στοιχεία του χρήστη για να ελέγξει αν ο χρήστης υπάρχει για να κάνει είσοδο.
                 Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(User.ToJSON()));
 
                 if (response.getStatus() == 200)
@@ -202,6 +206,7 @@ public class InstaFace extends JFrame
                     setSize(600, 200);
                     remove(LogPanel);
                     
+                    // Αν ο χρήστης υπάρχει, το web app επιστρέφει όλα τα στοιχεία του και τα κρατάμε σε μια μεταβλητή User.
                     JSONObject json = new JSONObject(response.readEntity(String.class));
                     User = new User(json.getString("Name"), json.getString("Surname"), json.getString("Username"), json.getString("Password"), json.getInt("Genre"), json.getString("Description"), json.getString("Country"), json.getString("Town"));
                     NameSurnameLabel.setText(User.getName() + " " + User.getSurname());
@@ -270,7 +275,9 @@ public class InstaFace extends JFrame
                     return;
                 }
 
+                // Θέτω target το αρχικό URL και του προσθέτω σε ποιο path του web app θα στέλνει για να κάνει προσθέσει ένα φίλο.
                 WebTarget target = Client.target(Target + "addfriend");
+                // Του στέλνω σε json τα στοιχεία του χρήστη και του φίλου που θέλει να προσθέσει για να δημιουεγήσει τη φιλία.
                 Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(new Friendship(User.getUsername(), friend).ToJSON()));
 
                 if (response.getStatus() == 200)
@@ -291,7 +298,9 @@ public class InstaFace extends JFrame
         {
             public void mouseClicked(java.awt.event.MouseEvent evt)
             {
+                // Θέτω target το αρχικό URL και του προσθέτω σε ποιο path του web app θα στέλνει για να επιστρέψει τους φίλους του χρήστη.
                 WebTarget target = Client.target(Target + "friends");
+                // Του στέλνω σε json τα στοιχεία του χρήστη για να μας επιστρέψει σε ενα string με τους φίλους του.
                 Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(User.ToJSON()));
 
                 if (response.getStatus() == 200)
@@ -354,7 +363,9 @@ public class InstaFace extends JFrame
                     return;
                 }
 
+                // Θέτω target το αρχικό URL και του προσθέτω σε ποιο path του web app θα στέλνει για να διαγράψει μια φιλία.
                 WebTarget target = Client.target(Target + "deletefriend");
+                // Του στέλνω σε json τα στοιχεία του χρήστη και του φίλου του διαγράψει τη φιλία.
                 Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(new Friendship(User.getUsername(), friend).ToJSON()));
 
                 if (response.getStatus() == 200)
@@ -383,7 +394,9 @@ public class InstaFace extends JFrame
                     return;
                 }
                 
+                // Θέτω target το αρχικό URL και του προσθέτω σε ποιο path του web app θα στέλνει για να ελέγξει αν το Post υπάρχει.
                 WebTarget target = Client.target(Target + "getpost");
+                // Του στέλνω σε string το Id του Post και επιστρέφει σε json όλα τα στοιχεία του Post.
                 Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(postid));
                 
                 if (response.getStatus() == 200)
@@ -412,8 +425,10 @@ public class InstaFace extends JFrame
                             }
                             else
                             {
+                                // Θέτω target το αρχικό URL και του προσθέτω σε ποιο path του web app θα στέλνει για να κάνει Update το Post.
                                 target = Client.target(Target + "editpost");
                                 post.setText(text);
+                                // Του στέλνω σε json το Post με το νέο περιεχόμενο.
                                 response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(post.ToJSON_ID()));
 
                                 if (response.getStatus() == 200)
@@ -437,7 +452,9 @@ public class InstaFace extends JFrame
         {
             public void mouseClicked(java.awt.event.MouseEvent evt)
             {
+                // Θέτω target το αρχικό URL και του προσθέτω σε ποιο path του web app θα στέλνει για να εμφανίσει τα Post του χρήστη.
                 WebTarget target = Client.target(Target + "posts");
+                // Του στέλνω σε json τον χρήστη και μου επιστρέφει σε ένα string και σε json όλα τα Post που έχει κάνει.
                 Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(User.ToJSON()));
 
                 if (response.getStatus() == 200)
@@ -482,7 +499,9 @@ public class InstaFace extends JFrame
                     return;
                 }
 
+                // Θέτω target το αρχικό URL και του προσθέτω σε ποιο path του web app θα στέλνει για να διαγράψει ένα Post.
                 WebTarget target = Client.target(Target + "deletepost");
+                // Του στέλνω σε string το Id του Post για να διαγράψει το Post αν υπάρχει.
                 Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(postid));
 
                 if (response.getStatus() == 200)
@@ -535,8 +554,10 @@ public class InstaFace extends JFrame
                         }
                         else
                         {
+                            // Θέτω target το αρχικό URL και του προσθέτω σε ποιο path του web app θα στέλνει για να δημιουργήσει ένα Post.
                             WebTarget target = Client.target(Target + "createpost");
                             Post post = new Post(User.getUsername(), username, text);
+                            // Του στέλνω σε json το Post που επιθυμώ να κάνω με όλα τα απαραίτητα στοιχεία.
                             Response response = target.request(MediaType.APPLICATION_JSON).post(Entity.json(post.ToJSON()));
 
                             if (response.getStatus() == 200)
@@ -585,6 +606,7 @@ public class InstaFace extends JFrame
         MainPanel.add(CreatePostButton);
     }
     
+    // Κρυπτογράφηση στον κωδικό του χρήστη.
     public String Hash(char[] passwordArr)
     {
         try
